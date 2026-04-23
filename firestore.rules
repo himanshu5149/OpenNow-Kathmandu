@@ -1,0 +1,72 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // 0. Global Safety Net
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // 3. Helpers
+    function isSignedIn() { return request.auth != null; }
+    function isOwner(userId) { return isSignedIn() && request.auth.uid == userId; }
+    function isValidId(id) { return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$'); }
+    function incoming() { return request.resource.data; }
+    function existing() { return resource.data; }
+
+    function isValidBusiness(data) {
+      return data.name is string && data.name.size() <= 100 &&
+             data.category in ['restaurant', 'pharmacy', 'grocery', 'cafe', 'momo_shop'] &&
+             data.lat is number && data.lng is number;
+    }
+
+    function isValidStatus(data) {
+      return data.business_id is string && isValidId(data.business_id) &&
+             data.user_id == request.auth.uid &&
+             data.is_open is bool &&
+             data.confidence is int && data.confidence >= 1 && data.confidence <= 5 &&
+             data.timestamp == request.time;
+    }
+
+    function isValidUser(data) {
+      return data.name is string && data.name.size() <= 100 &&
+             data.karma is int && data.karma >= 0 &&
+             data.verification_count is int && data.verification_count >= 0;
+    }
+
+    // 1. Businesses
+    match /businesses/{businessId} {
+      allow read: if true;
+      allow create: if isValidBusiness(incoming()) && isValidId(businessId);
+      allow update: if isSignedIn() && isValidId(businessId) && (
+        // Action: Report Status
+        incoming().diff(existing()).affectedKeys().hasOnly(['status_open_count', 'status_total_count', 'last_status_update']) &&
+        incoming().status_total_count == existing().status_total_count + 1 &&
+        incoming().last_status_update == request.time
+      );
+      allow delete: if false;
+    }
+
+    // 2. Statuses
+    match /statuses/{statusId} {
+      allow list: if isSignedIn() && resource.data.user_id == request.auth.uid;
+      allow get: if isSignedIn();
+      allow create: if isSignedIn() && isValidId(statusId) && isValidStatus(incoming()) && 
+                    exists(/databases/$(database)/documents/businesses/$(incoming().business_id));
+      allow update, delete: if false;
+    }
+
+    // 3. Users
+    match /users/{userId} {
+      // Allow public listing for the leaderboard
+      allow list: if true; 
+      allow get: if isSignedIn();
+      allow create: if isOwner(userId) && isValidUser(incoming());
+      allow update: if isOwner(userId) && (
+        // Action: Update Profile
+        incoming().diff(existing()).affectedKeys().hasOnly(['name']) ||
+        // Action: Earn Karma (System initiated via client write, restricted keys)
+        incoming().diff(existing()).affectedKeys().hasOnly(['karma', 'verification_count'])
+      );
+    }
+  }
+}

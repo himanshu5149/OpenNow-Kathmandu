@@ -1,0 +1,59 @@
+{
+  "entities": {
+    "business": {
+      "title": "Business",
+      "description": "A local place in Kathmandu",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "category": { "type": "string", "enum": ["restaurant", "pharmacy", "grocery", "cafe", "momo_shop"] },
+        "address": { "type": "string" },
+        "lat": { "type": "number" },
+        "lng": { "type": "number" },
+        "status_open_count": { "type": "integer" },
+        "status_total_count": { "type": "integer" },
+        "last_status_update": { "type": "string", "format": "date-time" }
+      },
+      "required": ["name", "category", "lat", "lng"]
+    },
+    "status": {
+      "title": "Business Status Report",
+      "description": "User verification of a business status",
+      "type": "object",
+      "properties": {
+        "business_id": { "type": "string" },
+        "user_id": { "type": "string" },
+        "is_open": { "type": "boolean" },
+        "confidence": { "type": "integer", "description": "1 to 5 stars" },
+        "timestamp": { "type": "string", "format": "date-time" },
+        "photo_url": { "type": "string" }
+      },
+      "required": ["business_id", "user_id", "is_open", "timestamp"]
+    },
+    "user": {
+      "title": "App User",
+      "description": "A local verifier",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "karma": { "type": "integer" },
+        "verification_count": { "type": "integer" }
+      },
+      "required": ["name"]
+    }
+  },
+  "firestore": {
+    "/businesses/{businessId}": {
+      "schema": "business",
+      "description": "Information about a business"
+    },
+    "/statuses/{statusId}": {
+      "schema": "status",
+      "description": "History of status reports"
+    },
+    "/users/{userId}": {
+      "schema": "user",
+      "description": "User profiles and karma"
+    }
+  }
+}

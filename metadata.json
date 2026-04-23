@@ -1,0 +1,8 @@
+{
+  "name": "OpenNow Kathmandu",
+  "description": "Crowd-sourced real-time status tracker for Kathmandu businesses. Locals verify if shops are open right now.",
+  "requestFramePermissions": [
+    "geolocation"
+  ],
+  "majorCapabilities": []
+}
