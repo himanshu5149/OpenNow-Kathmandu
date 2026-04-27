@@ -41,24 +41,66 @@
   width: 100%;
   height: 100%;
   z-index: 1;
-  background: #f8f9fa !important;
-}
-
-.leaflet-control-zoom {
-  border: none !important;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.1) !important;
-  @apply !rounded-2xl overflow-hidden glass mt-28 ml-6;
-}
-
-.leaflet-control-zoom-in, .leaflet-control-zoom-out {
-  background: transparent !important;
-  color: #1a1a1a !important;
-  border-bottom: 1px solid rgba(255,255,255,0.3) !important;
-  @apply !w-10 !h-10 flex items-center justify-center;
+  background: #f1f5f9 !important;
+  font-family: inherit;
 }
 
 .custom-marker {
   display: flex !important;
   align-items: center !important;
   justify-content: center !important;
+  background: transparent !important;
+  border: none !important;
+}
+
+.leaflet-popup-content-wrapper {
+  padding: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  border-radius: 24px !important;
+}
+
+.leaflet-popup-tip-container {
+  display: none !important;
+}
+
+.leaflet-popup-content {
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+/* Cluster Styles */
+.marker-cluster-small { background-color: rgba(181, 226, 140, 0.4); }
+.marker-cluster-small div { background-color: rgba(110, 204, 57, 0.8); }
+.marker-cluster-medium { background-color: rgba(241, 211, 87, 0.4); }
+.marker-cluster-medium div { background-color: rgba(240, 194, 12, 0.8); }
+.marker-cluster-large { background-color: rgba(253, 156, 115, 0.4); }
+.marker-cluster-large div { background-color: rgba(241, 128, 23, 0.8); }
+
+.marker-cluster {
+  background-clip: padding-box;
+  border-radius: 20px;
+}
+.marker-cluster div {
+  width: 30px;
+  height: 30px;
+  margin-left: 5px;
+  margin-top: 5px;
+  text-align: center;
+  border-radius: 15px;
+  font-weight: 800;
+  font-size: 11px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #0f172a;
+}
+
+@keyframes spin-slow {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.animate-spin-slow {
+  animation: spin-slow 3s linear infinite;
 }

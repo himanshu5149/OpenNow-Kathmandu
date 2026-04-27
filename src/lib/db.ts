@@ -12,11 +12,26 @@ import {
   setDoc,
   getDoc,
   getDocs,
-  where
+  where,
+  getDocFromServer
 } from 'firebase/firestore';
 import { db, auth } from './firebase';
-import { Business, StatusReport, UserProfile } from '../types';
+import { Business, StatusReport, UserProfile, Dispute } from '../types';
 import { offlineCache } from './offline';
+
+export const testConnection = async () => {
+  try {
+    // Attempt to fetch a non-existent doc from server to force connection check
+    await getDocFromServer(doc(db, '_internal', 'connectivity_test'));
+    return true;
+  } catch (err: any) {
+    // If the error is permission-denied (expected since we didn't add the doc), 
+    // it still confirms we reached the server.
+    if (err.message.includes('permission-denied') || err.code === 'permission-denied') return true;
+    console.error("Firebase Connection Test Failed:", err);
+    return false;
+  }
+};
 
 export const handleFirestoreError = (error: any, operationType: any, path: string | null) => {
   const user = auth.currentUser;
@@ -67,8 +82,13 @@ export const subscribeToBusinesses = (callback: (businesses: Business[]) => void
 
 export const addBusiness = async (business: Omit<Business, 'id' | 'status_open_count' | 'status_total_count'>) => {
   try {
+    // Scrub undefined values which Firestore hates
+    const cleanBusiness = Object.fromEntries(
+      Object.entries(business).filter(([_, v]) => v !== undefined)
+    );
+
     const docRef = await addDoc(collection(db, 'businesses'), {
-      ...business,
+      ...cleanBusiness,
       status_open_count: 0,
       status_total_count: 0,
       last_status_update: null
@@ -137,6 +157,52 @@ export const syncOfflineReports = async () => {
     } catch (err) {
       console.error("Sync failed for report:", report.id, err);
     }
+  }
+};
+
+export const getReportsForBusiness = async (businessId: string) => {
+  try {
+    const q = query(
+      collection(db, 'statuses'), 
+      where('business_id', '==', businessId),
+      orderBy('timestamp', 'desc'),
+      limit(5)
+    );
+    const snap = await getDocs(q);
+    return snap.docs.map(d => ({ id: d.id, ...d.data() })) as StatusReport[];
+  } catch (err) {
+    console.error("Failed to fetch reports:", err);
+    return [];
+  }
+};
+
+export const submitDispute = async (report: StatusReport, reason: string) => {
+  const user = auth.currentUser;
+  if (!user) throw new Error("Must be logged in to dispute");
+
+  try {
+    // 1. Add dispute document
+    await addDoc(collection(db, 'disputes'), {
+      report_id: report.id,
+      business_id: report.business_id,
+      user_id: user.uid,
+      reason,
+      timestamp: serverTimestamp()
+    });
+
+    // 2. Mark report as disputed
+    const reportRef = doc(db, 'statuses', report.id);
+    await updateDoc(reportRef, { disputed: true });
+
+    // 3. Deduct karma from the original reporter correctly (if valid)
+    // For MVP, we deduct 10 karma from the original reporter
+    const reporterRef = doc(db, 'users', report.user_id);
+    await updateDoc(reporterRef, {
+      karma: increment(-10)
+    });
+
+  } catch (err) {
+    handleFirestoreError(err, 'write', `/disputes/${report.id}`);
   }
 };
 

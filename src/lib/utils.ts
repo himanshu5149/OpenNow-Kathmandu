@@ -32,6 +32,22 @@ export function getStatusMarkerColor(openCount: number, totalCount: number) {
   return '#ef4444'; // Red 500
 }
 
+export function getNPTTime() {
+  const d = new Date();
+  const utc = d.getTime() + (d.getTimezoneOffset() * 60000);
+  const nptOffset = 5.75 * 3600000;
+  return new Date(utc + nptOffset);
+}
+
+export function formatNPT(date?: Date) {
+  const d = date || getNPTTime();
+  return d.toLocaleTimeString('en-US', { 
+    hour: 'numeric', 
+    minute: '2-digit', 
+    hour12: true 
+  });
+}
+
 export function calculateDistance(lat1: number, lon1: number, lat2: number, lon2: number) {
   const R = 6371e3; // metres
   const φ1 = lat1 * Math.PI / 180;

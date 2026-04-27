@@ -3,13 +3,16 @@ export type TabType = 'map' | 'search' | 'profile' | 'leaderboard';
 export interface Business {
   id: string;
   name: string;
-  category: 'restaurant' | 'pharmacy' | 'grocery' | 'cafe' | 'momo_shop';
-  address: string;
+  category: string;
+  address?: string;
   lat: number;
   lng: number;
   status_open_count: number;
   status_total_count: number;
-  last_status_update?: string;
+  last_status_update?: any;
+  phone?: string | null;
+  website?: string | null;
+  opening_hours?: string | null;
 }
 
 export interface StatusReport {
@@ -18,8 +21,18 @@ export interface StatusReport {
   user_id: string;
   is_open: boolean;
   confidence: number;
-  timestamp: string;
+  timestamp: any;
   photo_url?: string;
+  disputed?: boolean;
+}
+
+export interface Dispute {
+  id: string;
+  report_id: string;
+  business_id: string;
+  user_id: string; // reporter of dispute
+  reason: string;
+  timestamp: any;
 }
 
 export interface UserProfile {

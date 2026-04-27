@@ -14,9 +14,13 @@ service cloud.firestore {
     function existing() { return resource.data; }
 
     function isValidBusiness(data) {
-      return data.name is string && data.name.size() <= 100 &&
-             data.category in ['restaurant', 'pharmacy', 'grocery', 'cafe', 'momo_shop'] &&
-             data.lat is number && data.lng is number;
+      return data.name is string && data.name.size() <= 200 &&
+             data.category is string && data.category.size() <= 100 &&
+             data.lat is number && data.lng is number &&
+             (data.address == null || (data.address is string && data.address.size() <= 300)) &&
+             (data.phone == null || (data.phone is string && data.phone.size() <= 50)) &&
+             (data.website == null || (data.website is string && data.website.size() <= 500)) &&
+             (data.opening_hours == null || (data.opening_hours is string && data.opening_hours.size() <= 500));
     }
 
     function isValidStatus(data) {
